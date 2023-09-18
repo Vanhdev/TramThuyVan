@@ -1,0 +1,62 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout Style="display:flex; flex-direction:column">
+    <MudAppBar Fixed="true" Elevation="0" Style="z-index:unset;">
+        <MudImage Src="Images/logo-icon.png" Color="Color.Inherit" Edge="Edge.Start" />
+        <MudSpacer />
+        <MudMenu AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopRight" >
+            <ActivatorContent>
+                <MudChip Icon="@Icons.Material.Filled.Person" Color="Color.Primary">@Username</MudChip>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem IconSize="Size.Small" Icon="@Icons.Material.Filled.Key" Style="width: max-content">
+                    Thay đổi mật khẩu
+                </MudMenuItem>
+                <MudMenuItem IconSize="Size.Small" Icon="@Icons.Material.Filled.Logout">
+                    Đăng xuất
+                </MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+    </MudAppBar>
+    <MudMainContent Style="display: flex;flex-direction: column;">
+        <div style="background-color:whitesmoke; border: 1px solid #ddd; width:100%; height: 40px">
+            <MudMenu Label="Quản trị hệ thống" ActivationEvent="@MouseEvent.MouseOver"
+            AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+                <MudMenuItem>Quản lý người dùng</MudMenuItem>
+                <MudMenuItem>Quản lý quyền</MudMenuItem>
+                <MudMenuItem>Quản lý menu</MudMenuItem>
+            </MudMenu>
+            <MudMenu Label="Quản trị khoan trắc" ActivationEvent="@MouseEvent.MouseOver"
+            AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+                <MudMenuItem>Quản lý nhóm</MudMenuItem>
+                <MudMenuItem>Quản lý khu vực</MudMenuItem>
+                <MudMenuItem Href="/tram">Quản lý trạm</MudMenuItem>
+                <MudMenuItem>Quản lý khí tượng</MudMenuItem>
+                <MudMenuItem>Quản lý thủy văn</MudMenuItem>
+            </MudMenu>
+            <MudMenu Label="Báo cáo dữ liệu 10 phút" ActivationEvent="@MouseEvent.MouseOver"
+            AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+                <MudMenuItem>Số liệu khí tượng</MudMenuItem>
+                <MudMenuItem>Số liệu thủy văn</MudMenuItem>
+                <MudMenuItem>Số liệu đo mưa</MudMenuItem>
+                <MudMenuItem>Số liệu đo gió</MudMenuItem>
+                <MudMenuItem>Số liệu mưa nhiệt</MudMenuItem>
+            </MudMenu>
+        </div>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private string? Username = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Username = await localStorage.GetItemAsync<string>("Username");
+        StateHasChanged();
+    }
+}

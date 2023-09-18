@@ -1,0 +1,278 @@
+﻿@page "/tram"
+@inject Services.TramService tramService
+@inject IJSRuntime JsRuntime
+
+<div style="display:flex; justify-content:space-around; height: fit-content; padding:10px">
+    <MudSelect T="string" Label="Khu vực"
+               AnchorOrigin="Origin.BottomCenter"
+               Variant="Variant.Outlined" Clearable
+               Placeholder="Chọn khu vực"
+               Style="max-width:350px"
+               @bind-Value="Area">
+        <MudSelectItem Value="@("Đài đồng bằng")" />
+    </MudSelect>
+    <MudTextField Variant="Variant.Outlined" Label="Tên trạm" Placeholder="Nhập tên trạm"
+    @bind-Value="Name" For="@(() => Name)" Style="max-width:350px" />
+    <MudButton Variant="Variant.Filled" Color="Color.Info" Style="padding: 15px; margin: 20px; border-radius: 5px;"
+               OnClick="Search">
+        Tìm kiếm
+    </MudButton>
+</div>
+<div style="background-color:#def4fd; height:45px;display:flex;flex-direction:row-reverse">
+    <button style="background-color:#0071a6; border-radius:0.25rem; color:white; margin:5px; padding:10px"
+            onclick="@(() => ShowForm("Thêm mới"))">
+        Thêm mới
+    </button>
+</div>
+<div>
+    <table>
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên khu vực</th>
+                <th>Tên trạm</th>
+                <th>Mã trạm</th>
+                <th>Kiểu trạm</th>
+                <th>Họat động</th>
+                <th>Kinh độ</th>
+                <th>Vĩ độ</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        @if (Result is not null)
+        {
+            <tbody>
+                @for (int i = 1; i <= Result.Count; i++)
+                {
+                    var indx = i - 1;
+                    <tr>
+                        <td>@i</td>
+                        <td>Đài đồng bằng Bắc Bộ</td>
+                        <td>@Result[i-1].Ten</td>
+                        <th>@Result[i-1].Id</th>
+                        <th>@Result[i-1].Type</th>
+                        <th>
+                            <input type="checkbox" checked="@Result[i-1].IsActive">
+                        </th>
+                        <th>@Result[i-1].Longitude</th>
+                        <th>@Result[i-1].Latitude</th>
+                        <th>
+                            <div style="display:flex; justify-content:space-around">
+                                <button class="delete-btn" onclick="@(() => ShowDeleteAlert(indx))">
+                                    <MudIcon Icon="@Icons.Material.Outlined.Close" Style="color:black" Size="Size.Small"></MudIcon>
+                                    Xóa
+                                </button>
+                                <button class="update-btn" onclick="@(() => ShowForm("Cập nhật", indx))">Cập nhật</button>
+                            </div>
+
+                        </th>
+                    </tr>
+                }
+            </tbody>
+
+        }
+
+    </table>
+</div>
+
+<MudOverlay Visible="showForm" DarkBackground="true" Absolute="true">
+    <div class="window">
+        <div class="window-caption">
+            <span class="title">@Title</span>
+            <div class="buttons">
+                @*<div>
+                <MudIcon Icon="@Icons.Material.Filled.Minimize" Style="color:white"></MudIcon>
+                </div>
+                <div>
+                <MudIcon Icon="@Icons.Material.Outlined.WebAsset" Style="color:white"></MudIcon>
+                </div>*@
+                <div onclick="@(() => CloseWindow())">
+                    <MudIcon Icon="@Icons.Material.Outlined.Close" Style="color:white"></MudIcon>
+                </div>
+            </div>
+        </div>
+        <TramForm Tram="@tram" Action="@Action"></TramForm>
+    </div>
+</MudOverlay>
+
+<MudDialog IsVisible="showAlert">
+    <DialogContent>
+        Bạn có chắc muốn xóa?
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Hủy</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Delete">OK</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    table {
+        width: -webkit-fill-available;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    thead {
+        background-color: #0071a6;
+        color: white;
+        height: 40px;
+        text-align: center;
+    }
+
+    tr {
+        height: 30px;
+    }
+
+    tbody, td, tfoot, th, thead, tr {
+        border-width: 1px;
+        border-color: #bacdd5;
+        text-align: center;
+    }
+
+    .delete-btn {
+        display: flex;
+        gap: 10px;
+    }
+
+    .delete-btn, .update-btn {
+        background-color: #def4fd;
+        width: 80px;
+        padding: 5px;
+        margin: 5px;
+        border-radius: 5px;
+    }
+
+    .map-container {
+        width: 100%;
+        height: 100%;
+    }
+
+    .esri-view .esri-view-surface--touch-none:focus::after {
+        outline: none !important;
+    }
+
+    .window {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        height: -webkit-fill-available;
+        background-color: #ffffff;
+        color: #1d1d1d;
+        border: 1px #e9e9e9 solid;
+    }
+
+    .window-caption {
+        display: flex;
+        justify-content: space-between;
+        height: 3rem;
+        line-height: 2.25rem;
+        vertical-align: middle;
+        background-color: #3c6478;
+        color: #ffffff;
+    }
+
+        .window-caption .buttons {
+            height: 100%;
+            margin-left: auto;
+            display: flex;
+            flex-wrap: nowrap;
+            -webkit-box-orient: horizontal;
+            -webkit-box-direction: normal;
+            flex-direction: row;
+        }
+
+    .mud-overlay-content {
+        width: 90%;
+        height: 90%;
+        z-index: 10;
+    }
+</style>
+
+@code {
+    private List<Models.Tram>? Result;
+    private string? Name;
+    private string? Area;
+    private int count = 0;
+    private bool showForm = false;
+    private bool showAlert = false;
+    private string? Id;
+    private Models.Tram tram = new Models.Tram();
+    private string? Title;
+    private string? Action;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await localStorage.GetItemAsync<string>("Token");
+
+        Result = await tramService.GetAll(token);
+
+        StateHasChanged();
+    }
+
+
+    protected void ShowForm(string action, int? index)
+    {
+        Action = action;
+        if (index is not null) 
+        {
+            int i = (int)index;
+            //tram.Ten = Result.value[i].Ten;
+            //tram.Id = Result.value[i]._id;
+            //tram.Latitude = Result.value[i].Latitude;
+            //tram.Longitude = Result.value[i].Longitude;
+            //tram.IsActive = Result.value[i].IsActive;
+            //tram.Type = Result.value[i].Type;
+            tram = Result[i];
+
+            Title = tram.Ten;
+        }
+        else
+        {
+            tram = new Models.Tram();
+        }
+        showForm = true;
+        StateHasChanged();
+    }
+    protected void ShowForm(string action) => ShowForm(action, null);
+    protected async Task ShowDeleteAlert(int index)
+    {
+        Id = Result[index].Id;
+        await JsRuntime.InvokeAsync<object>("console.log", $"Message: {Id}");
+        showAlert = true;
+        StateHasChanged();
+    }
+
+    protected void Cancel()
+    {
+        showAlert = false;
+        StateHasChanged();
+    }
+    protected async void Delete()
+    {
+        var token = await localStorage.GetItemAsync<string>("Token");
+        dynamic result = new System.Dynamic.ExpandoObject();
+        if (Id != null) result = await tramService.Delete(token, Id);
+
+        if (result is not null && result.Code == 200)
+        {
+            Result = await tramService.GetAll(token);
+        }
+
+        showAlert = false;
+        StateHasChanged();
+    }
+    protected async Task CloseWindow()
+    {
+        showForm = false;
+        StateHasChanged();
+
+        var token = await localStorage.GetItemAsync<string>("Token");
+
+        Result = await tramService.GetAll(token);
+        StateHasChanged();
+    }
+    protected void Search() => Result = Result.FindAll(x => x.Ten == Name && x.Area == Area);
+}

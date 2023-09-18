@@ -1,0 +1,166 @@
+﻿@page "/home"
+@using System.Dynamic;
+@inject Services.TramService tramService
+@inject IJSRuntime JSRuntime
+
+@*<div id="map" style="width:60%; height:100%;" onclick="@HandleClick"></div>*@
+
+<MapView Class="map-view"
+         Style="width:60%; height:100%;"
+         OnClick="OnPointerMoveOrDown"
+         Zoom="7.5"
+@ref="_mapView">
+    <WebMap @ref="_webMap">
+        <PortalItem Id="395a872338aa4767a66065d17eacbc26" />
+        @if (Result is not null)
+        {
+            <GraphicsLayer>
+                @foreach (var Tram in Result)
+                {
+                    <Graphic Attributes="@(new AttributesDictionary(new Dictionary<string, object>
+                                     {
+                                         { "id", Tram.Id},
+                                         { "Name", Tram.Ten },
+                                         { "Type", Tram.Type}
+                                     }))">
+                        <PictureMarkerSymbol Url="https://img.icons8.com/ios-filled/50/visit.png" Width="32" Height="32" />
+                        <Point Longitude="@Tram.Longitude" Latitude="@Tram.Latitude" />
+                    </Graphic>
+                }
+            </GraphicsLayer>
+        }
+    </WebMap>
+    <ScaleBarWidget Position="OverlayPosition.BottomLeft" />
+    <LegendWidget Position="OverlayPosition.TopRight" />
+</MapView>
+<MudOverlay Visible="isVisible" DarkBackground="true" Absolute="true" ZIndex="2000">
+    <div class="window">
+        <div class="window-caption">
+            <span class="title">Name</span>
+            <div class="buttons">
+                @*<div>
+                    <MudIcon Icon="@Icons.Material.Filled.Minimize" Style="color:white"></MudIcon>
+                </div>
+                <div>
+                    <MudIcon Icon="@Icons.Material.Outlined.WebAsset" Style="color:white"></MudIcon>
+                </div>*@
+                <div onclick="@(() => CloseWindow())">
+                    <MudIcon Icon="@Icons.Material.Outlined.Close" Style="color:white"></MudIcon>
+                </div>
+            </div>
+        </div>
+        <DataTable TramId="@tramId" Type="@Type"></DataTable>
+    </div>
+</MudOverlay>
+
+<style>
+    .map-container {
+        width: 100%;
+        height: 100%;
+    }
+
+    .esri-view .esri-view-surface--touch-none:focus::after {
+        outline: none !important;
+    }
+
+    .window {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        height: -webkit-fill-available;
+        background-color: #ffffff;
+        color: #1d1d1d;
+        border: 1px #e9e9e9 solid;
+    }
+
+    .window-caption {
+        display: flex;
+        justify-content: space-between;
+        height: 3rem;
+        line-height: 2.25rem;
+        vertical-align: middle;
+        background-color: #3c6478;
+        color: #ffffff;
+    }
+
+    .window-caption .buttons {
+        height: 100%;
+        margin-left: auto;
+        display: flex;
+        flex-wrap: nowrap;
+        -webkit-box-orient: horizontal;
+        -webkit-box-direction: normal;
+        flex-direction: row;
+    }
+
+    .mud-overlay-content {
+        width: 90%;
+        height: 90%;
+        z-index: 10;
+    }
+
+</style>
+
+@code {
+    private dynamic? Result;
+    private bool isVisible;
+    private string? tramId;
+    private string? Type;
+    private string? Name;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await localStorage.GetItemAsync<string>("Token");
+
+        Result = await tramService.GetAll(token);
+
+        StateHasChanged();
+    }
+
+    private async Task OnPointerMoveOrDown(ClickEvent clickEvent)
+    {
+        if (_evaluatingPointer) return;
+
+        _evaluatingPointer = true;
+        try
+        {
+            HitTestOptions options = new();
+            HitTestResult result = await _mapView!.HitTest(clickEvent, options);
+            Graphic? graphic = result.Results.OfType<GraphicHit>().FirstOrDefault()?.Graphic;
+            if (graphic?.Attributes != null)
+            {
+                graphic.Attributes.TryGetValue("id", out object? _id);
+                graphic.Attributes.TryGetValue("Type", out object? _type);
+                graphic.Attributes.TryGetValue("Name", out object? _name);
+                var id = _id?.ToString();
+                var name = _name?.ToString();
+                var type = _type?.ToString();
+                if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(type) && !string.IsNullOrEmpty(name))
+                {
+                    tramId = id;
+                    Name = name;
+                    Type = type;
+                    isVisible = true;
+                    StateHasChanged();
+                }
+
+                _evaluatingPointer = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+        _evaluatingPointer = false;
+    }
+
+    protected void CloseWindow()
+    {
+        isVisible = false;
+        StateHasChanged();
+    }
+
+    private MapView? _mapView;
+    private WebMap? _webMap;
+    private bool _evaluatingPointer;
+}

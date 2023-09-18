@@ -1,0 +1,105 @@
+﻿@page "/"
+@page "/login"
+@layout AuthLayout
+@using KTTV.Models
+@using System.ComponentModel.DataAnnotations
+@inject Microsoft.AspNetCore.Components.NavigationManager navigation
+@inject Services.AuthService authService
+
+<MudContainer MaxWidth="MaxWidth.Small" Style="height:inherit">
+
+    <EditForm Model="@model" OnValidSubmit="OnValidSubmit" class="form--center">
+        <DataAnnotationsValidator />
+        <MudCard>
+            <MudCardHeader Class="block text-center">
+                <MudImage Src="Images/logo-icon.png" />
+                <h3>Đăng nhập hệ thống</h3>
+            </MudCardHeader>
+            <h5 style="padding:16px;">Thông tin đăng nhập</h5>
+            <MudCardContent>
+                <MudTextField Variant="Variant.Outlined" Label="Tên đăng nhập" Placeholder="Nhập tên đăng nhập"
+                @bind-Value="model.Username" For="@(() => model.Username)" />
+                <MudTextField Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon" 
+                OnAdornmentClick="ShowPassword" AdornmentAriaLabel="Show Password"
+                Variant="Variant.Outlined" Label="Mật khẩu" Placeholder="Nhập mật khẩu" Class="mt-3"
+                @bind-Value="model.Password" For="@(() => model.Password)" InputType="@PasswordInput" />
+
+            </MudCardContent>
+            <MudCardActions Style="justify-content:space-around">
+                <MudCheckBox Color="Color.Info" @bind-Checked="Remember">Ghi nhớ</MudCheckBox>
+                <div style="display:flex">
+                    <MudIcon Icon="@Icons.Material.Filled.Lock"></MudIcon>
+                    <a style="text-decoration:none">Quên mật khẩu?</a>
+                </div>
+            </MudCardActions>
+            <MudCardActions>
+                <MudButton Style="margin:auto" ButtonType="ButtonType.Submit" Variant="Variant.Filled"
+                           Color="Color.Info" Class="ml-auto">
+                    Đăng nhập
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </EditForm>
+</MudContainer>
+
+<style>
+    .form--center {
+        position: relative;
+        top: 50%;
+        left: 50%;
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+    }
+
+    .block {
+        display: block;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .login-group {
+        display: flex;
+    }
+</style>
+
+
+@code {
+    private bool Remember = true;
+    private LoginModel model = new();
+
+    bool isShow;
+    InputType PasswordInput = InputType.Password;
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    void ShowPassword()
+    {
+        @if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
+
+    private async void OnValidSubmit(EditContext context)
+    {
+        dynamic result = await authService.Login(model);
+
+        if(result is not null)
+        {
+            await localStorage.SetItemAsync("Token", result.value.Token);
+            await localStorage.SetItemAsync("Username", result.value._id);
+        }
+        
+        StateHasChanged();
+        navigation.NavigateTo("/home");
+    }
+}

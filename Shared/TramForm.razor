@@ -1,0 +1,104 @@
+﻿@inject Services.TramService tramService
+
+<div style="display:flex; height:100%">
+    <MapView Class="map-view"
+             Style="width:60%; height:100%;"
+             Zoom="7.5"
+             @ref="_mapView">
+        <WebMap @ref="_webMap">
+            <PortalItem Id="395a872338aa4767a66065d17eacbc26" />
+        </WebMap>
+        <ScaleBarWidget Position="OverlayPosition.BottomLeft" />
+        <LegendWidget Position="OverlayPosition.TopRight" />
+    </MapView>
+    <div style="margin:20px; width:40%; text-align:center;">
+        <MudTextField Variant="Variant.Outlined" Label="Kinh độ" @bind-Value="Longitude" For="@(() => Longitude)" Style="margin-bottom:10px"/>
+        <MudTextField Variant="Variant.Outlined" Label="Vĩ độ" @bind-Value="Latitude" For="@(() => Latitude)" Style="margin-bottom10px"/>
+        <MudTextField Variant="Variant.Outlined" Label="Tên trạm" @bind-Value="Name" For="@(() => Name)" Style="margin-bottom:10px" />
+        <MudTextField Variant="Variant.Outlined" Label="ID thiết bị" @bind-Value="ID" For="@(() => ID)" Style="margin-bottom:10px" />
+        <MudSelect T="string" Label="Khu vực"
+                   AnchorOrigin="Origin.BottomCenter"
+                   Variant="Variant.Outlined" Clearable
+                   Placeholder="Chọn khu vực"
+                   Style="margin-bottom:10px"
+                   @bind-Value="Area">
+            <MudSelectItem Value="@("Đài đồng bằng")" Style="z-index:3000;" />
+        </MudSelect>
+        <MudSelect T="string" Label="Khu vực"
+                   AnchorOrigin="Origin.BottomCenter"
+                   Variant="Variant.Outlined" Clearable
+                   Placeholder="Chọn khu vực"
+                   Style="margin-bottom:10px"
+                   @bind-Value="Type">
+            <MudSelectItem Value="@("Trạm khí tượng")" Style="z-index:3000;"/>
+            <MudSelectItem Value="@("Trạm thủy văn")" Style="z-index:3000;" />
+            <MudSelectItem Value="@("Trạm đo mưa")" Style="z-index:3000;" />
+            <MudSelectItem Value="@("Trạm đo gió")" Style="z-index:3000;"/>
+            <MudSelectItem Value="@("Trạm mưa nhiệt")" Style="z-index:3000;" />
+        </MudSelect>
+        <MudCheckBox Color="Color.Info" @bind-Checked="IsActive">Ghi nhớ</MudCheckBox>
+        <MudButton Variant="Variant.Filled" Color="Color.Info" Style="padding: 15px; margin: 20px; border-radius: 5px;"
+                       OnClick="Submit">
+                @Action
+        </MudButton>
+        
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Models.Tram? Tram { get; set; }
+    [Parameter]
+    public string? Action { get; set; }
+
+    private double Longitude;
+    private double Latitude;
+    private string? Name;
+    private string? ID;
+    private string? Area;
+    private string? Type;
+    private bool IsActive = false;
+
+    protected override void OnInitialized()
+    {
+        if (Tram is not null)
+        {
+            Longitude = Tram.Longitude;
+            Latitude = Tram.Latitude;
+            Name = Tram.Ten;
+            ID = Tram.Id;
+            Type = Tram.Type;
+            Area = "Đài đồng bằng";
+        }
+        StateHasChanged();
+    }
+
+    protected async Task Submit()
+    {
+        var newTram = new Models.Tram();
+        newTram.Longitude = Longitude;
+        newTram.Latitude = Latitude;
+        newTram.Ten = Name;
+        newTram.Id = ID;
+        newTram.Area = Area;
+        newTram.Type = Type;
+        newTram.IsActive = IsActive;
+
+        var token = await localStorage.GetItemAsync<string>("Token");
+
+        if(Action == "Thêm mới")
+        {
+            var result = await tramService.Create(token, newTram);
+        }
+
+        if(Action == "Cập nhật")
+        {
+            var result = await tramService.Update(token, newTram);
+        }
+
+        StateHasChanged();
+    }
+
+    private MapView? _mapView;
+    private WebMap? _webMap;
+}

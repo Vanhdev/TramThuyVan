@@ -1,0 +1,31 @@
+﻿
+        <MudTable Items="_items" Height="350px" Breakpoint="Breakpoint.Sm" Virtualize="true" FixedHeader="true">
+            <HeaderContent>
+                <MudTh>Column1</MudTh>
+                <MudTh>Column2</MudTh>
+                <MudTh>Column3</MudTh>
+                <MudTh>Column4</MudTh>
+                <MudTh>Column5</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Column1">@context.Column1</MudTd>
+                <MudTd DataLabel="Column2">@context.Column2</MudTd>
+                <MudTd DataLabel="Column3">@context.Column3</MudTd>
+                <MudTd DataLabel="Column4">@context.Column4</MudTd>
+                <MudTd DataLabel="Column5">@context.Column5</MudTd>
+            </RowTemplate>
+        </MudTable>
+
+@code {
+    [Parameter]
+    public string? TramId { get; set; }
+
+    [Parameter]
+    public string? Type { get; set; }
+
+    private List<dynamic> _items = new List<dynamic>();
+    //protected override Task OnInitializedAsync()
+    //{
+        
+    //}
+}
